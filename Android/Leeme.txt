@@ -1,0 +1,1 @@
+Directorio con el contenido de la aplicación Android.
