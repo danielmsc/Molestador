@@ -27,7 +27,7 @@ public class AyudaActivity extends AppCompatActivity {
                 "<b>NOTA:</b> es obligatorio realizar el emparejamiento del dispositivo con el módulo Bluetooth previamente.<br><br>" +
                 "<b>NOTA:</b> si el Bluetooth no se activa, o bien no está disponible en el dispositivo, la aplicación no podrá ser usada.<br>" +
                 "<br>" +
-                "Se debe seleccionar \"HC-05\" para realizar la conexión.<br>" +
+                "Se debe seleccionar \"Molestador\" para realizar la conexión.<br>" +
                 "<br>" +
                 "<b>--- SEGUNDO PASO: CONFIGURAR HORA ---</b><br>" +
                 "<br>" +
