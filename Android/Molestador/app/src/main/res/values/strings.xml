@@ -19,4 +19,5 @@
     <string name="mensaje">NO HAY SUFICIENTE LUZ</string>
     <string name="dialog_salir">Salir</string>
     <string name="dialog_no_bt">Bluetooth no disponible</string>
+    <string name="ayuda">Ayuda</string>
 </resources>

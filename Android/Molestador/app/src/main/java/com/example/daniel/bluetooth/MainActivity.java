@@ -58,11 +58,17 @@ public class MainActivity extends AppCompatActivity {
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
 
+        Button btnAyuda = findViewById(R.id.btnAyuda);
+        btnAyuda.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, AyudaActivity.class);
+                startActivity(intent);
+            }
+        });
 
-
-        Button btn = findViewById(R.id.btnGet);
-
-        btn.setOnClickListener(new View.OnClickListener() {
+        Button btnGetDevices = findViewById(R.id.btnGet);
+        btnGetDevices.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Set<BluetoothDevice> pairedDevices = bt.getBondedDevices();
