@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">Molestador</string>
+    <string name="salir_bt">No hay Bluetooth disponible.</string>
+    <string name="entendido">Entendido</string>
+    <string name="enviar_hora">Enviar hora</string>
+    <string name="prog_alarma">Programar alarma</string>
+    <string name="get_dispositivos">Obtener dispositivos</string>
+    <string name="error_no_sensor">No sensor</string>
+    <string name="label_light">Light Sensor: %1$.2f</string>
+    <string name="label_proximity">Proximity Sensor: %1$.2f</string>
+    <string name="hora">La hora es: %s</string>
+    <string name="horaMilis"> (en milisegundos: %s)</string>
+    <string name="roll">Roll: %.2f</string>
+    <string name="pasadasProximidad">Pasadas: %d</string>
+    <string name="textview">TextView</string>
+    <string name="girosCompletos">girosCompletos</string>
+    <string name="girosContador">Giros completos: %d</string>
+    <string name="progreso">Grados: %d°</string>
+    <string name="mensaje">NO HAY SUFICIENTE LUZ</string>
+</resources>
