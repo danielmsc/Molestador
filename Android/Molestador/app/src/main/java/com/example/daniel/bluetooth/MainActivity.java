@@ -1,16 +1,12 @@
 package com.example.daniel.bluetooth;
 
-import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
-import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.support.v4.app.ActivityCompat;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -19,11 +15,7 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -40,6 +32,17 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "Main";
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if(requestCode == REQUEST_ENABLE_BT) {
+            if(resultCode == RESULT_CANCELED) {
+                new DialogoNoBluetooth().show(getSupportFragmentManager(), "dialogo");
+            }
+        }
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -47,14 +50,15 @@ public class MainActivity extends AppCompatActivity {
         bt = BluetoothAdapter.getDefaultAdapter();
 
         if (bt == null) {
-            Toast.makeText(MainActivity.this, "El dispositivo no tiene Bluetooth", Toast.LENGTH_SHORT).show();
-            finish();
+            new DialogoNoBluetooth().show(getSupportFragmentManager(), "dialogo");
         }
 
         if (!bt.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
+
+
 
         Button btn = findViewById(R.id.btnGet);
 

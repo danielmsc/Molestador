@@ -1,5 +1,7 @@
 package com.example.daniel.bluetooth;
 
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -7,6 +9,9 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Vibrator;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -65,6 +70,13 @@ public class SensoresActivity extends AppCompatActivity implements SensorEventLi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sensores);
 
+        Bundle bundle = getIntent().getExtras();
+        boolean visible = bundle.getBoolean("visible");
+        if(!visible) {
+            moveTaskToBack(true);
+        }
+        lanzarNotificacion();
+
         salida = EscribirBluetooth.getInstance();
         yaTermino = true;
 
@@ -102,8 +114,6 @@ public class SensoresActivity extends AppCompatActivity implements SensorEventLi
         mSensorProximity = mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
         mSensorAcelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mSensorMagneticField = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-
-
 
         if(mSensorLight == null) {
             txvLuz.setText(sensor_error);
@@ -284,10 +294,42 @@ public class SensoresActivity extends AppCompatActivity implements SensorEventLi
 
     }
 
+    @Override
+    public void onBackPressed() {
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        borrarNotificacion();
+    }
+
+    private void lanzarNotificacion() {
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, "notifAlarma")
+                .setSmallIcon(R.drawable.ic_stat_access_alarm)
+                .setContentTitle("Desactivar alarma")
+                .setContentText("Abrir Molestador para desactivar Arduino")
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+        mBuilder.setVibrate(new long[] {0, 1000, 1000, 1000});
+
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        notificationManager.notify(0, mBuilder.build());
+    }
+
+    private void borrarNotificacion() {
+        NotificationManager notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancel(0);
+    }
+
     private void salir() {
+        Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
         salida.escribir(Mensaje.SIG_DESAFIO, "SIG_DESAFIO");
-        Intent intent = new Intent(SensoresActivity.this, ProgramacionActivity.class);
-        startActivity(intent);
+        vibrator.vibrate(new long[]{0, 100, 100, 100}, -1);
+        //Intent intent = new Intent(SensoresActivity.this, ProgramacionActivity.class);
+        //startActivity(intent);
+        //borrarNotificacion();
         finish();
     }
 }

@@ -17,4 +17,6 @@
     <string name="girosContador">Giros completos: %d</string>
     <string name="progreso">Grados: %d°</string>
     <string name="mensaje">NO HAY SUFICIENTE LUZ</string>
+    <string name="dialog_salir">Salir</string>
+    <string name="dialog_no_bt">Bluetooth no disponible</string>
 </resources>

@@ -1,10 +1,15 @@
 package com.example.daniel.bluetooth;
 
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.TimePickerDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -20,6 +25,7 @@ public class ProgramacionActivity extends AppCompatActivity {
     private LeerBluetooth leer;
     private TextView recibido;
     private Handler handler;
+    private boolean esVisible;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,7 +58,7 @@ public class ProgramacionActivity extends AppCompatActivity {
                             @Override
                             public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
                                 String hora = String.format("%02d:%02d", hourOfDay, minute);
-                                horaSeleccionada.setText(hora);
+                                horaSeleccionada.setText("Alarma programada: " + hora);
                                 salida.escribir(Mensaje.SET_ALARMA, hora);
                             }
                         }, mHour, mMinute, true);
@@ -72,6 +78,7 @@ public class ProgramacionActivity extends AppCompatActivity {
                 //Si la cadena que recibe es "APAGAR", lanzo la actividad de gestos de desbloqueo
                 if(cad.equals("APAGAR")) {
                     Intent intent = new Intent(ProgramacionActivity.this, SensoresActivity.class);
+                    intent.putExtra("visible", esVisible);
                     startActivity(intent);
                 }
             }
@@ -79,6 +86,20 @@ public class ProgramacionActivity extends AppCompatActivity {
         recibido = findViewById(R.id.textViewData);
         leer = new LeerBluetooth(handler);
         leer.start();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        esVisible = false;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        esVisible = true;
     }
 
     @Override
@@ -93,5 +114,4 @@ public class ProgramacionActivity extends AppCompatActivity {
         long unixTime = (System.currentTimeMillis() - 10800000) / 1000;
         salida.escribir(Mensaje.SET_HORA, Long.toString(unixTime));
     }
-
 }
