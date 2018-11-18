@@ -327,9 +327,7 @@ public class SensoresActivity extends AppCompatActivity implements SensorEventLi
         Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
         salida.escribir(Mensaje.SIG_DESAFIO, "SIG_DESAFIO");
         vibrator.vibrate(new long[]{0, 100, 100, 100}, -1);
-        //Intent intent = new Intent(SensoresActivity.this, ProgramacionActivity.class);
-        //startActivity(intent);
-        //borrarNotificacion();
+        Toast.makeText(SensoresActivity.this, "Alarma desactivada", Toast.LENGTH_SHORT).show();
         finish();
     }
 }

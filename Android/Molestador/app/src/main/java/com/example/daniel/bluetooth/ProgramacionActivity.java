@@ -80,6 +80,7 @@ public class ProgramacionActivity extends AppCompatActivity {
                     Intent intent = new Intent(ProgramacionActivity.this, SensoresActivity.class);
                     intent.putExtra("visible", esVisible);
                     startActivity(intent);
+                    horaSeleccionada.setText("");
                 }
             }
         };
