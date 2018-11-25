@@ -1,9 +1,7 @@
 package com.example.daniel.bluetooth;
 
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -55,9 +53,10 @@ public class SensoresActivity extends AppCompatActivity implements SensorEventLi
     private ProgressBar barraCircular;
     private boolean isGiros_completados = false;
 
-    private boolean isSuficienteLuz;
+    private boolean isSuficienteLuz = false;
 
-    private static final int LUZ_MINIMA = 10;
+    private static final int LUZ_MINIMA = 50;
+    private static final int LUZ_MAXIMA = 300;
     private static final int CANT_PASADAS = 10;
     private static final int CANT_GIRO = 5;
     private static final int GRADOS_GIRO = 30;
@@ -130,13 +129,6 @@ public class SensoresActivity extends AppCompatActivity implements SensorEventLi
 
     }
 
-    private String getMilis(String hora) {
-        String data[] = hora.split(":");
-        int milis = Integer.parseInt(data[0]) * 3600000 + Integer.parseInt(data[1]) * 60000 + Integer.parseInt(data[2]) * 1000;
-
-        return Integer.toString(milis);
-    }
-
     @Override
     protected void onStart() {
         super.onStart();
@@ -176,7 +168,11 @@ public class SensoresActivity extends AppCompatActivity implements SensorEventLi
             case Sensor.TYPE_LIGHT:
                 txvLuz.setText(getResources().getString(R.string.label_light, event.values[0]));
                 lux = event.values[0];
-                isSuficienteLuz = lux >= LUZ_MINIMA;
+                if(isSuficienteLuz == false && lux > LUZ_MAXIMA) {
+                    isSuficienteLuz = true;
+                } else if(isSuficienteLuz == true && lux < LUZ_MINIMA) {
+                    isSuficienteLuz = false;
+                }
                 break;
 
             case Sensor.TYPE_PROXIMITY:
@@ -213,6 +209,7 @@ public class SensoresActivity extends AppCompatActivity implements SensorEventLi
         } else if(valorLuz == 100 && mediaPasada){
             mediaPasada = false;
             pasadasProximidad++;
+            salida.escribir(MensajeTx.INFO_DESAFIO, generarStringInfoSensores(pasadasProximidad, contadorGiros));
             barraPasadas.setProgress(pasadasProximidad);
             isPasadas_completadas = pasadasProximidad == CANT_PASADAS;
         }
@@ -263,6 +260,7 @@ public class SensoresActivity extends AppCompatActivity implements SensorEventLi
 
             if ( izquierda && derecha ){ // && contadorGiros < CANT_GIRO
                 contadorGiros++;
+                salida.escribir(MensajeTx.INFO_DESAFIO, generarStringInfoSensores(pasadasProximidad, contadorGiros));
                 izquierda = false;
                 derecha = false;
                 isGiros_completados = contadorGiros == CANT_GIRO;
@@ -306,6 +304,10 @@ public class SensoresActivity extends AppCompatActivity implements SensorEventLi
         borrarNotificacion();
     }
 
+    private String generarStringInfoSensores(int pasadasProximidad, int contadorGiros) {
+        return new String("Pasadas: " + pasadasProximidad + " - Giros: " + contadorGiros);
+    }
+
     private void lanzarNotificacion() {
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, "notifAlarma")
                 .setSmallIcon(R.drawable.ic_stat_access_alarm)
@@ -325,7 +327,7 @@ public class SensoresActivity extends AppCompatActivity implements SensorEventLi
 
     private void salir() {
         Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-        salida.escribir(Mensaje.SIG_DESAFIO, "SIG_DESAFIO");
+        salida.escribir(MensajeTx.APAGAR_ALARMA, MensajeTx.APAGAR_ALARMA.toString());
         vibrator.vibrate(new long[]{0, 100, 100, 100}, -1);
         Toast.makeText(SensoresActivity.this, "Alarma desactivada", Toast.LENGTH_SHORT).show();
         finish();

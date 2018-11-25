@@ -28,10 +28,10 @@ public class EscribirBluetooth {
         return obj;
     }
 
-    public void escribir(Mensaje tipoMensaje, String cadena) {
+    public void escribir(MensajeTx tipoMensajeTx, String cadena) {
         if(socket.isConnected()) {
             try {
-                String enviar = tipoMensaje.ordinal() + cadena;
+                String enviar = tipoMensajeTx.ordinal() + cadena;
                 out.write(enviar.getBytes(Charset.forName("UTF-8")));
             } catch (IOException e) {
                 Log.e(TAG, "Error al escribir al BT");

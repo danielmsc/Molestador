@@ -1,15 +1,10 @@
 package com.example.daniel.bluetooth;
 
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.TimePickerDialog;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -44,6 +39,9 @@ public class ProgramacionActivity extends AppCompatActivity {
             }
         });
 
+        final TextView infoDesafioBotones = findViewById(R.id.textDesafioBotones);
+        final TextView infoDesafioMoverse = findViewById(R.id.textDesafioMoverse);
+
         final TextView horaSeleccionada = findViewById(R.id.textHora);
         Button btnProgAlarma = findViewById(R.id.buttonProgAlarma);
         btnProgAlarma.setOnClickListener(new View.OnClickListener() {
@@ -59,7 +57,7 @@ public class ProgramacionActivity extends AppCompatActivity {
                             public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
                                 String hora = String.format("%02d:%02d", hourOfDay, minute);
                                 horaSeleccionada.setText("Alarma programada: " + hora);
-                                salida.escribir(Mensaje.SET_ALARMA, hora);
+                                salida.escribir(MensajeTx.SET_ALARMA, hora);
                             }
                         }, mHour, mMinute, true);
                 tpd.show();
@@ -74,13 +72,18 @@ public class ProgramacionActivity extends AppCompatActivity {
             public void handleMessage(Message msg) {
                 Bundle bundle = msg.getData();
                 String cad = bundle.getString("recibido");
+                String subCad = cad.substring(0,1);
                 recibido.setText(cad);
                 //Si la cadena que recibe es "APAGAR", lanzo la actividad de gestos de desbloqueo
-                if(cad.equals("APAGAR")) {
+                if(subCad.equals("" + MensajeRx.ACTIVAR_SENSORES.ordinal())) {
                     Intent intent = new Intent(ProgramacionActivity.this, SensoresActivity.class);
                     intent.putExtra("visible", esVisible);
                     startActivity(intent);
                     horaSeleccionada.setText("");
+                } else if(subCad.equals("" + MensajeRx.INFO_BOTONES.ordinal())) {
+                    infoDesafioBotones.setText(cad);
+                } else {
+                    infoDesafioMoverse.setText(cad);
                 }
             }
         };
@@ -113,6 +116,6 @@ public class ProgramacionActivity extends AppCompatActivity {
 
     private void enviarHoraMilis() {
         long unixTime = (System.currentTimeMillis() - 10800000) / 1000;
-        salida.escribir(Mensaje.SET_HORA, Long.toString(unixTime));
+        salida.escribir(MensajeTx.SET_HORA, Long.toString(unixTime));
     }
 }
