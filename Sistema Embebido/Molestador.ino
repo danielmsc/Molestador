@@ -28,7 +28,7 @@ const int ANDROID = 3;
 const int FIN = 4;
 
 // Cantidad de repeteciones de cada desafío
-const int REPETICIONES = 1;
+const int REPETICIONES = 3;
 int repeticion = 0;
 
 Adafruit_ILI9341 tft = Adafruit_ILI9341(CS, DC, MOSI, SCLK, RST, MISO);
@@ -36,7 +36,7 @@ SoftwareSerial bluetooth(RX, TX);
 
 int minutoActual;
 int sonando = false;
-bool activo = true;
+bool activo = false;
 bool androidStart = true;
 int desafio = BOTONES;
 int alarmID = -1;
