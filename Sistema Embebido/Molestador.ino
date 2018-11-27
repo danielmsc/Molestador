@@ -64,6 +64,7 @@ void loop() {
   }
   if (activo) {
     if (!luzAlta()) {
+      sonarLuzBaja();
       return;
     }
     switch (desafio) {
@@ -179,6 +180,18 @@ void sonarEnMillis(int melodia[], int tempo[], int tam) {
 
 void resetCancion() {
   nota = 0;
+}
+
+unsigned long tiempoLuzBaja = 0;
+int notaLuz = 0;
+
+void sonarLuzBaja() {
+  if (millis() - tiempoLuzBaja >= 1.5 * luzBajaTempo[notaLuz]) {
+    Esplora.tone(luzBaja[notaLuz], luzBajaTempo[notaLuz]);
+    tiempoLuzBaja = millis();
+    notaLuz++;
+    nota %= sizeof(luzBaja) / sizeof(int);
+  }
 }
 
 //--------------------COMUNICACION BT-----------------------------
