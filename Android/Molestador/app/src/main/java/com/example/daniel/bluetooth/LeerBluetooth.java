@@ -11,29 +11,29 @@ import java.util.Scanner;
 
 public class LeerBluetooth extends Thread {
 
-    private DatosBluetooth btDatos;
+    //private DatosBluetooth btDatos;
     private BluetoothSocket socket;
-    private InputStream in;
+    //private InputStream in;
     private static final String TAG = "Leer BT";
     private Handler handler;
-    private int lecturas;
-    private String cadenaRecibida = "";
+    //private int lecturas;
+    //private String cadenaRecibida = "";
     private Scanner sc;
 
     public LeerBluetooth(Handler handler) {
-        this.btDatos = DatosBluetooth.getInstance();
-        this.in = btDatos.getIn();
+        DatosBluetooth btDatos = DatosBluetooth.getInstance();
+        InputStream in = btDatos.getIn();
         this.socket = btDatos.getSocket();
         this.handler = handler;
-        this.sc = new Scanner(this.in);
+        this.sc = new Scanner(in);
     }
 
     @Override
     public void run() {
-        while(!Thread.currentThread().isInterrupted()&& socket.isConnected()) {
+        while (!Thread.currentThread().isInterrupted() && socket.isConnected()) {
             try {
-                if(sc.hasNextLine()) {
-                    cadenaRecibida = sc.nextLine();
+                if (sc.hasNextLine()) {
+                    String cadenaRecibida = sc.nextLine();
                     Message msg = handler.obtainMessage();
                     Bundle bundle = new Bundle();
                     bundle.putString("recibido", cadenaRecibida);
@@ -49,7 +49,6 @@ public class LeerBluetooth extends Thread {
 
         try {
             sc.close();
-            return;
         } catch (Exception e) {
             Log.e(TAG, "Error al cerrar el scanner");
         }

@@ -10,13 +10,13 @@ import java.nio.charset.Charset;
 public class EscribirBluetooth {
 
     private static EscribirBluetooth obj;
-    private DatosBluetooth btDatos;
+    //private DatosBluetooth btDatos;
     private BluetoothSocket socket;
     private OutputStream out;
     private static final String TAG = "Escribir BT";
 
     private EscribirBluetooth(){
-        this.btDatos = DatosBluetooth.getInstance();
+        DatosBluetooth btDatos = DatosBluetooth.getInstance();
         this.socket = btDatos.getSocket();
         this.out = btDatos.getOut();
     }
@@ -32,7 +32,7 @@ public class EscribirBluetooth {
         if(socket.isConnected()) {
             try {
                 String enviar = tipoMensajeTx.ordinal() + cadena;
-                out.write(enviar.getBytes(Charset.forName("UTF-8")));
+                out.write(enviar.getBytes(Charset.forName("US-ASCII")));
             } catch (IOException e) {
                 Log.e(TAG, "Error al escribir al BT");
                 Log.e(TAG, e.getMessage());

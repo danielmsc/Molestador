@@ -18,13 +18,21 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.Locale;
+
+
 public class SensoresActivity extends AppCompatActivity implements SensorEventListener {
 
-    private SensorManager mSensorManager;
-    private Sensor mSensorProximity;
-    private Sensor mSensorLight;
-    private Sensor mSensorAcelerometer;
-    private Sensor mSensorMagneticField;
+    private Toast toast;
+    private Context contexto;
+
+    private SensorManager sensorManager;
+
+    private Sensor sensorProximidad;
+    private Sensor sensorLuz;
+    private Sensor sensorAcelerometro;
+    private Sensor sensorCampoMagnetico;
+
     private TextView txvProximidad;
     private TextView txvPasadas;
     private TextView txvGiros;
@@ -32,37 +40,41 @@ public class SensoresActivity extends AppCompatActivity implements SensorEventLi
     private TextView txvLuz;
     private TextView txvRoll;
     private TextView txvMensaje;
-    private float rotationMatrix[] = new float[9];
-    private float orientationAngles[] = new float[3];
-    private float accelerometerData[] = new float[3];
-    private float magnetometerData[] = new float[3];
-    private float lux;
 
-    private boolean mediaPasada;
-    private int pasadasProximidad;
-    private ProgressBar barraPasadas;
-    private boolean isPasadas_completadas = false;
+    private float matrixI[] = null;
+    private float matrixR[] = new float[9];
+    private float values[] = new float[3];
+    private float gravity[] = new float[3];
+    private float geomagnetic[] = new float[3];
 
+    private int duracion = Toast.LENGTH_SHORT;
+    private int contadorPasadas;
     private int contadorGiros;
     private int angulo;
-    private Double angle;
-    private boolean izquierda;
-    private boolean derecha;
-    private ProgressBar barraIzq;
-    private ProgressBar barraDer;
-    private ProgressBar barraCircular;
-    private boolean isGiros_completados = false;
+    private int proximity = 100;
+    private Double angle = 0.0;
 
-    private boolean isSuficienteLuz = false;
+    private CharSequence texto;
+
+    private ProgressBar pbIzquierda;
+    private ProgressBar pbDerecha;
+    private ProgressBar pbGiros;
+    private ProgressBar pbPasadas;
+
+    private boolean derecha;
+    private boolean izquierda;
+    private boolean mediaPasada;
+    private boolean isSuficienteLuz;
+    private boolean isGirosCompletados;
+    private boolean isPasadasCompletadas;
 
     private static final int LUZ_MINIMA = 50;
-    private static final int LUZ_MAXIMA = 300;
+    private static final int LUZ_MAXIMA = 100;
+    private static final int GRADOS_GIRO = 30;
     private static final int CANT_PASADAS = 10;
     private static final int CANT_GIRO = 5;
-    private static final int GRADOS_GIRO = 30;
 
     private EscribirBluetooth salida;
-    private boolean yaTermino;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,18 +82,22 @@ public class SensoresActivity extends AppCompatActivity implements SensorEventLi
         setContentView(R.layout.activity_sensores);
 
         Bundle bundle = getIntent().getExtras();
-        boolean visible = bundle.getBoolean("visible");
-        if(!visible) {
+        boolean visible = false;
+        if (bundle != null) {
+            visible = bundle.getBoolean("visible");
+        }
+        if (!visible) {
             moveTaskToBack(true);
         }
         lanzarNotificacion();
 
         salida = EscribirBluetooth.getInstance();
-        yaTermino = true;
+
+        contexto = getApplicationContext();
 
         String sensor_error = getResources().getString(R.string.error_no_sensor);
 
-        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         txvLuz = findViewById(R.id.TextLuz);
         txvRoll = findViewById(R.id.TextRoll);
         txvGiros = findViewById(R.id.TextGiros);
@@ -93,37 +109,37 @@ public class SensoresActivity extends AppCompatActivity implements SensorEventLi
         txvMensaje.setVisibility(View.INVISIBLE);
         txvMensaje.setTextColor(Color.RED);
 
-        barraPasadas = findViewById(R.id.circularProgressbar2);
-        barraPasadas.setProgress(0);
-        barraPasadas.setMax(CANT_PASADAS);
+        pbPasadas = findViewById(R.id.circularProgressbarPasadas);
+        pbPasadas.setProgress(0);
+        pbPasadas.setMax(CANT_PASADAS);
 
-        barraIzq = findViewById(R.id.progressIzq);
-        barraIzq.setMax(GRADOS_GIRO);
-        barraIzq.setScaleY(3f);
+        pbIzquierda = findViewById(R.id.progressIzq);
+        pbIzquierda.setMax(GRADOS_GIRO);
+        pbIzquierda.setScaleY(3f);
 
-        barraDer = findViewById(R.id.progressDer);
-        barraDer.setMax(GRADOS_GIRO);
-        barraDer.setScaleY(3f);
+        pbDerecha = findViewById(R.id.progressDer);
+        pbDerecha.setMax(GRADOS_GIRO);
+        pbDerecha.setScaleY(3f);
 
-        barraCircular = findViewById(R.id.circularProgressbar);
-        barraCircular.setProgress(0);
-        barraCircular.setMax(CANT_GIRO);
+        pbGiros = findViewById(R.id.circularProgressbarGiros);
+        pbGiros.setProgress(0);
+        pbGiros.setMax(CANT_GIRO);
 
-        mSensorLight = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
-        mSensorProximity = mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
-        mSensorAcelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        mSensorMagneticField = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+        sensorLuz = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
+        sensorProximidad = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
+        sensorAcelerometro = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        sensorCampoMagnetico = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 
-        if(mSensorLight == null) {
+        if (sensorLuz == null) {
             txvLuz.setText(sensor_error);
         }
-        if(mSensorProximity == null) {
+        if (sensorProximidad == null) {
             txvProximidad.setText(sensor_error);
         }
-        if(mSensorAcelerometer == null) {
+        if (sensorAcelerometro == null) {
             txvRoll.setText(sensor_error);
         }
-        if(mSensorMagneticField == null) {
+        if (sensorCampoMagnetico == null) {
             txvRoll.setText(sensor_error);
         }
 
@@ -132,24 +148,29 @@ public class SensoresActivity extends AppCompatActivity implements SensorEventLi
     @Override
     protected void onStart() {
         super.onStart();
+        txvPasadas.setText(getResources().getString(R.string.pasadasProximidad, contadorPasadas));
         txvGiros.setText(getResources().getString(R.string.girosContador, contadorGiros));
-        txvRoll.setText(getResources().getString(R.string.label_proximity, angle));
+        txvProximidad.setText(getResources().getString(R.string.proximidad, proximity));
         txvGrados.setText(getResources().getString(R.string.progreso, angulo));
+        txvRoll.setText(getResources().getString(R.string.roll, angle));
 
-        if(mSensorProximity != null) {
-            mSensorManager.registerListener(this, mSensorProximity, SensorManager.SENSOR_DELAY_NORMAL);
+        int samplingFrequency = SensorManager.SENSOR_DELAY_NORMAL;
+        SensorEventListener listener = this;
+
+        if (sensorProximidad != null) {
+            sensorManager.registerListener(listener, sensorProximidad, samplingFrequency);
         }
 
-        if(mSensorLight != null) {
-            mSensorManager.registerListener(this, mSensorLight, SensorManager.SENSOR_DELAY_NORMAL);
+        if (sensorLuz != null) {
+            sensorManager.registerListener(listener, sensorLuz, samplingFrequency);
         }
 
-        if(mSensorAcelerometer != null) {
-            mSensorManager.registerListener(this, mSensorAcelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        if (sensorAcelerometro != null) {
+            sensorManager.registerListener(listener, sensorAcelerometro, samplingFrequency);
         }
 
-        if(mSensorMagneticField != null) {
-            mSensorManager.registerListener(this, mSensorMagneticField, SensorManager.SENSOR_DELAY_NORMAL);
+        if (sensorCampoMagnetico != null) {
+            sensorManager.registerListener(listener, sensorCampoMagnetico, samplingFrequency);
         }
     }
 
@@ -157,135 +178,162 @@ public class SensoresActivity extends AppCompatActivity implements SensorEventLi
     protected void onStop() {
         super.onStop();
 
-        mSensorManager.unregisterListener(this);
+        sensorManager.unregisterListener(this);
     }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
         int sensorType = event.sensor.getType();
+        float[] valores = event.values;
 
-        switch(sensorType) {
+        switch (sensorType) {
             case Sensor.TYPE_LIGHT:
-                txvLuz.setText(getResources().getString(R.string.label_light, event.values[0]));
-                lux = event.values[0];
-                if(isSuficienteLuz == false && lux > LUZ_MAXIMA) {
+                int valorLuz = (int) valores[0];
+                texto = getResources().getString(R.string.luzAmbiente, valorLuz);
+                txvLuz.setText(texto);
+
+                if (!isSuficienteLuz && valorLuz > LUZ_MAXIMA) {
                     isSuficienteLuz = true;
-                } else if(isSuficienteLuz == true && lux < LUZ_MINIMA) {
+                } else if (isSuficienteLuz && valorLuz < LUZ_MINIMA) {
                     isSuficienteLuz = false;
                 }
                 break;
 
             case Sensor.TYPE_PROXIMITY:
-                if (!isPasadas_completadas) {
-                    contarPasadas(event.values[0]);
+                proximity = (int) valores[0];
+                if (!isPasadasCompletadas) {
+                    contarPasadas();
                 }
                 break;
 
             case Sensor.TYPE_ACCELEROMETER:
-                System.arraycopy(event.values, 0, accelerometerData,0, 3);
+                System.arraycopy(valores, 0, gravity, 0, 3);
                 break;
 
             case Sensor.TYPE_MAGNETIC_FIELD:
-                System.arraycopy(event.values, 0, magnetometerData, 0, 3);
+                System.arraycopy(valores, 0, geomagnetic, 0, 3);
                 break;
 
             default:
                 return;
         }
 
-        if(sensorType != Sensor.TYPE_LIGHT && sensorType != Sensor.TYPE_PROXIMITY) {
+        //if(System.currentTimeMillis() - tiempoAnterior > 5000) {
+        //    salida.escribir(MensajeTx.INFO_DESAFIO, infoPasadasGiros());
+        //    tiempoAnterior = System.currentTimeMillis();
+        //}
+
+        if (sensorType != Sensor.TYPE_LIGHT && sensorType != Sensor.TYPE_PROXIMITY) {
 
             computeOrientation();
 
-            if (!isGiros_completados) {
-                printRoll(lux);
+            if (!isGirosCompletados) {
+                contarGiros();
             }
         }
     }
 
-    private void contarPasadas(float valorLuz) {
-        if( !mediaPasada && (valorLuz == 3 || valorLuz == 1)) {
-            mediaPasada = true;
-        } else if(valorLuz == 100 && mediaPasada){
-            mediaPasada = false;
-            pasadasProximidad++;
-            salida.escribir(MensajeTx.INFO_DESAFIO, generarStringInfoSensores(pasadasProximidad, contadorGiros));
-            barraPasadas.setProgress(pasadasProximidad);
-            isPasadas_completadas = pasadasProximidad == CANT_PASADAS;
-        }
-
-        txvProximidad.setText(getResources().getString(R.string.label_proximity, valorLuz));
-        txvPasadas.setText(getResources().getString(R.string.pasadasProximidad, pasadasProximidad));
-
-        if (isPasadas_completadas){
-            Context contexto = getApplicationContext();
-            CharSequence texto = "¡Pasadas completadas!";
-            int duracion = Toast.LENGTH_SHORT;
-
-            Toast toast = Toast.makeText(contexto,texto, duracion);
-            toast.setGravity(Gravity.CENTER_HORIZONTAL|Gravity.CENTER_VERTICAL,0,-15);
-            toast.show();
-
-            if(isGiros_completados) {
-                salir();
-            }
-        }
-    }
-
-    private void computeOrientation() {
-        SensorManager.getRotationMatrix(rotationMatrix, null, accelerometerData, magnetometerData);
-        SensorManager.getOrientation(rotationMatrix, orientationAngles);
-    }
-
-    private void printRoll(float lux) {
-        if (!isSuficienteLuz){
+    private void contarPasadas() {
+        if (!isSuficienteLuz) {
             txvMensaje.setVisibility(View.VISIBLE);
         } else {
             txvMensaje.setVisibility(View.INVISIBLE);
 
-            angle = Math.toDegrees(orientationAngles[2]);
-            angulo = Math.abs(angle.intValue()); // angulo lo paso a entero y saco el modulo
-
-            int progresoIzq = angle < 0 ? angulo : 0 ; // Valor negativo: inclinacion hacia la izquierda
-            int progresoDer = angle > 0 ? angulo : 0 ; // Valor positivo: inclinacion hacia la derecha
-
-            barraIzq.setProgress(izquierda ? GRADOS_GIRO : progresoIzq);
-            barraDer.setProgress(derecha ? GRADOS_GIRO : progresoDer);
-
-            if( !izquierda && angle < -GRADOS_GIRO ) {
-                izquierda = true;
-            } else if( !derecha && angle > GRADOS_GIRO) {
-                derecha = true;
+            if (!mediaPasada && proximity < 4) {
+                mediaPasada = true;
+            } else if (proximity == 100 && mediaPasada) {
+                mediaPasada = false;
+                contadorPasadas++;
+                salida.escribir(MensajeTx.INFO_DESAFIO, infoPasadasGiros());
+                pbPasadas.setProgress(contadorPasadas);
+                isPasadasCompletadas = contadorPasadas == CANT_PASADAS;
             }
 
-            if ( izquierda && derecha ){ // && contadorGiros < CANT_GIRO
-                contadorGiros++;
-                salida.escribir(MensajeTx.INFO_DESAFIO, generarStringInfoSensores(pasadasProximidad, contadorGiros));
-                izquierda = false;
-                derecha = false;
-                isGiros_completados = contadorGiros == CANT_GIRO;
-            }
+            texto = getResources().getString(R.string.proximidad, proximity);
+            txvProximidad.setText(texto);
 
-            barraCircular.setProgress(contadorGiros);
-            txvRoll.setText(getResources().getString(R.string.roll, angle));
-            txvGrados.setText(getResources().getString(R.string.progreso, angle.intValue()));
-            txvGiros.setText(getResources().getString(R.string.girosContador,contadorGiros));
+            texto = getResources().getString(R.string.pasadasProximidad, contadorPasadas);
+            txvPasadas.setText(texto);
 
-            if (isGiros_completados){
-                Context contexto = getApplicationContext();
-                CharSequence texto = "¡Giros completados!";
-                int duracion = Toast.LENGTH_SHORT;
+            if (isPasadasCompletadas) {
+                texto = "Pasadas completadas!";
+                int offsetX = 0, offsetY = -15;
+                int gravity = Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL;
 
-                Toast toast = Toast.makeText(contexto,texto, duracion);
-                toast.setGravity(Gravity.CENTER|Gravity.BOTTOM,0,55);
+                toast = Toast.makeText(contexto, texto, duracion);
+                toast.setGravity(gravity, offsetX, offsetY);
                 toast.show();
 
-                if(isPasadas_completadas) {
+                if (isGirosCompletados) {
                     salir();
                 }
             }
         }
     }
+
+    private void computeOrientation() {
+        SensorManager.getRotationMatrix(matrixR, matrixI, gravity, geomagnetic);
+        SensorManager.getOrientation(matrixR, values);
+    }
+
+    private void contarGiros() {
+        if (!isSuficienteLuz) {
+            txvMensaje.setVisibility(View.VISIBLE);
+        } else {
+            txvMensaje.setVisibility(View.INVISIBLE);
+
+            angle = Math.toDegrees(values[2]);
+            angulo = Math.abs(angle.intValue()); // angulo lo paso a entero y saco el modulo
+
+            // Valor negativo: inclinacion hacia la izquierda
+            int progresoIzq = angle < 0 ? angulo : 0;
+
+            // Valor positivo: inclinacion hacia la derecha
+            int progresoDer = angle > 0 ? angulo : 0;
+
+            pbIzquierda.setProgress(izquierda ? GRADOS_GIRO : progresoIzq);
+            pbDerecha.setProgress(derecha ? GRADOS_GIRO : progresoDer);
+
+            if (!izquierda && angle < -GRADOS_GIRO) {
+                izquierda = true;
+            } else if (!derecha && angle > GRADOS_GIRO) {
+                derecha = true;
+            }
+
+            if (izquierda && derecha) {
+                contadorGiros++;
+                salida.escribir(MensajeTx.INFO_DESAFIO, infoPasadasGiros());
+                izquierda = false;
+                derecha = false;
+                isGirosCompletados = contadorGiros == CANT_GIRO;
+            }
+
+            pbGiros.setProgress(contadorGiros);
+            texto = getResources().getString(R.string.roll, angle);
+            txvRoll.setText(texto);
+
+            texto = getResources().getString(R.string.progreso, angle.intValue());
+            txvGrados.setText(texto);
+
+            texto = getResources().getString(R.string.girosContador, contadorGiros);
+            txvGiros.setText(texto);
+
+            if (isGirosCompletados) {
+                texto = "Giros completados!";
+                int offsetX = 0, offsetY = 55;
+                int gravity = Gravity.CENTER | Gravity.BOTTOM;
+
+                toast = Toast.makeText(contexto, texto, duracion);
+                toast.setGravity(gravity, offsetX, offsetY);
+                toast.show();
+
+                if (isPasadasCompletadas) {
+                    salir();
+                }
+            }
+        }
+    }
+
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
@@ -304,8 +352,8 @@ public class SensoresActivity extends AppCompatActivity implements SensorEventLi
         borrarNotificacion();
     }
 
-    private String generarStringInfoSensores(int pasadasProximidad, int contadorGiros) {
-        return new String("Pasadas: " + pasadasProximidad + " - Giros: " + contadorGiros);
+    private String infoPasadasGiros() {
+        return String.format(Locale.US, "Pasadas: %02d - Giros: %02d", contadorPasadas, contadorGiros);
     }
 
     private void lanzarNotificacion() {
@@ -314,22 +362,32 @@ public class SensoresActivity extends AppCompatActivity implements SensorEventLi
                 .setContentTitle("Desactivar alarma")
                 .setContentText("Abrir Molestador para desactivar Arduino")
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT);
-        mBuilder.setVibrate(new long[] {0, 1000, 1000, 1000});
+        mBuilder.setVibrate(new long[]{0, 1000, 1000, 1000});
 
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
         notificationManager.notify(0, mBuilder.build());
     }
 
     private void borrarNotificacion() {
-        NotificationManager notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.cancel(0);
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (notificationManager != null) {
+            notificationManager.cancel(0);
+        }
     }
 
     private void salir() {
         Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-        salida.escribir(MensajeTx.APAGAR_ALARMA, MensajeTx.APAGAR_ALARMA.toString());
-        vibrator.vibrate(new long[]{0, 100, 100, 100}, -1);
-        Toast.makeText(SensoresActivity.this, "Alarma desactivada", Toast.LENGTH_SHORT).show();
+        salida.escribir(MensajeTx.SIG_DESAFIO, MensajeTx.SIG_DESAFIO.toString());
+
+        if (vibrator != null) {
+            vibrator.vibrate(new long[]{0, 100, 100, 100}, -1);
+        }
+
+        texto = "Alarma desactivada";
+
+        toast = Toast.makeText(contexto, texto, duracion);
+        toast.setText(texto);
+        toast.show();
         finish();
     }
 }
